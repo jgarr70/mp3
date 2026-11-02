@@ -47,6 +47,12 @@ module.exports = function (router) {
         try {
             const { name, deadline } = req.body;
 
+            if (!name || !deadline) {
+                return res.status(400).json({
+                    message: "Name and deadline are required"
+                });
+            }
+
             const newTask = new Task({ name, deadline });
             await newTask.save();
 
@@ -54,6 +60,8 @@ module.exports = function (router) {
                 message: "Task created successfully",
                 data: newTask
             });
+
+
 
 
         } catch (error) {
