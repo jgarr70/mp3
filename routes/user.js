@@ -6,7 +6,7 @@ module.exports = function (router) {
 
     router.get('/users', async function (req, res) {
         try {
-            let users = {};
+            let query = User.find({});
             let selectFields = null;
             
             const selectParams = req.query.select;
@@ -14,11 +14,11 @@ module.exports = function (router) {
             if(selectParams) {
                 selectFields = JSON.parse(selectParams);
                 console.log("Select fields:", selectFields);
-                users = await User.find({}).select(selectFields);
-            } else {
-                users = await User.find();
+                query = query.select(selectFields);
             }
-
+            
+            const users = await query;
+            
             res.json({
                 message: "OK",
                 data: users
@@ -34,7 +34,18 @@ module.exports = function (router) {
 
     router.get('/users/:id', async function (req, res) {
         try {
-            const user = await User.findById(req.params.id);
+            let query = User.findById(req.params.id);
+            let selectFields = null;
+            
+            const selectParams = req.query.select;
+
+            if(selectParams) {
+                selectFields = JSON.parse(selectParams);
+                console.log("Select fields:", selectFields);
+                query = query.select(selectFields);
+            }
+            
+            const user = await query;
 
 
             if (!user) {
@@ -50,6 +61,7 @@ module.exports = function (router) {
             
 
         } catch (error) {
+            console.error("Error fetching user:", error);
             if (error.name === 'CastError') {
                 return res.status(400).json({
                     message: "Invalid user ID"
