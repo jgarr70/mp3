@@ -6,7 +6,18 @@ module.exports = function (router) {
 
     router.get('/users', async function (req, res) {
         try {
-            const users = await User.find();
+            let users = {};
+            let selectFields = null;
+            
+            const selectParams = req.query.select;
+
+            if(selectParams) {
+                selectFields = JSON.parse(selectParams);
+                console.log("Select fields:", selectFields);
+                users = await User.find({}).select(selectFields);
+            } else {
+                users = await User.find();
+            }
 
             res.json({
                 message: "OK",
@@ -14,6 +25,7 @@ module.exports = function (router) {
             });
 
         } catch (error) {
+            console.error("Error fetching users:", error);
             res.status(500).json({
                 message: "Internal Server Error"
             });
@@ -24,18 +36,25 @@ module.exports = function (router) {
         try {
             const user = await User.findById(req.params.id);
 
+
             if (!user) {
                 return res.status(404).json({
                     message: "User not found"
                 });
             }
 
-            res.json({
-                message: "OK",
+            res.status(200).json({
+                message: "User found",
                 data: user
             });
+            
 
         } catch (error) {
+            if (error.name === 'CastError') {
+                return res.status(400).json({
+                    message: "Invalid user ID"
+                });
+            }
             res.status(500).json({
                 message: "Internal Server Error"
             });
