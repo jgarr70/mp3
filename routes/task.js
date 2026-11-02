@@ -45,7 +45,7 @@ module.exports = function (router) {
     router.post('/tasks', async function (req, res) {
         console.log("POST /tasks route reached!");
         try {
-            const { name, deadline } = req.body;
+            const { name, deadline, description, completed, assignedUser, assignedUserName, dataCreated} = req.body;
 
             if (!name || !deadline) {
                 return res.status(400).json({
@@ -53,7 +53,7 @@ module.exports = function (router) {
                 });
             }
 
-            const newTask = new Task({ name, deadline });
+            const newTask = new Task({ name, deadline, description, completed, assignedUser, assignedUserName, dataCreated });
             await newTask.save();
 
             res.status(201).json({
