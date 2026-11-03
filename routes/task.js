@@ -115,8 +115,10 @@ module.exports = function (router) {
 
             task.assignedUser = assignedUser;
             task.assignedUserName = assignedUserName;
+            user.pendingTasks.push(task._id.toString());
 
             const updatedTask = await task.save();
+            const updatedUser = await user.save();
 
             res.status(200).json({
                 message: "Task updated successfully",
