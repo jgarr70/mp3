@@ -1,4 +1,5 @@
 const Task = require('../models/task');
+const User = require('../models/user');
 
 console.log("Loading task.js");
 
@@ -80,6 +81,57 @@ module.exports = function (router) {
                 message: "Internal Server Error"
             });
         }
+    });
+
+
+    router.put('/tasks/:id', async function (req, res) {
+        console.log("PUT /tasks/:id route reached!");
+        try {
+            let query = Task.findById(req.params.id);
+            const task = await query;
+
+            if (!task){
+                return res.status(404).json({
+                    message: "Task not found"
+                });
+            }
+            // console.log("Req: ", req.body);
+            const { assignedUser, assignedUserName,} = req.body;
+
+            let user_query = User.findById(assignedUser);
+            const user = await user_query;
+
+            if (!user){
+                return res.status(404).json({
+                    message: "User not found"
+                });
+            }
+
+            if(user.name !== assignedUserName){
+                return res.status(400).json({
+                    message: "Assigned user name does not match the user ID"
+                });
+            }
+
+            task.assignedUser = assignedUser;
+            task.assignedUserName = assignedUserName;
+
+            const updatedTask = await task.save();
+
+            res.status(200).json({
+                message: "Task updated successfully",
+                data: updatedTask
+            });
+
+
+
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            res.status(500).json({
+                message: "Internal Server Error"
+            });
+        }
+
     });
 
     return router;

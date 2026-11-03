@@ -107,6 +107,10 @@ module.exports = function (router) {
         }
     });
 
+    // router.put('/users/:id', async function (req, res) {
+
+    // });
+
     
 
     return router;
