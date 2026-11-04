@@ -121,7 +121,7 @@ module.exports = function (router) {
             task.deadline = deadline;
             task.completed = completed;
 
-            if (task.completed == true) {
+            if (task.completed == false) {
                 user.pendingTasks.push(task._id.toString());
             } 
             // else{
