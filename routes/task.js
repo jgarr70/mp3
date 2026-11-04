@@ -95,11 +95,14 @@ module.exports = function (router) {
                     message: "Task not found"
                 });
             }
-            // console.log("Req: ", req.body);
-            const { assignedUser, assignedUserName,} = req.body;
+            // console.log("Req: ", req.body);name: {
+            const { assignedUser, assignedUserName, name, description, deadline, completed} = req.body;
 
             let user_query = User.findById(assignedUser);
             const user = await user_query;
+
+            task.assignedUser = assignedUser;
+            task.assignedUserName = assignedUserName;
 
             if (!user){
                 return res.status(404).json({
@@ -113,9 +116,17 @@ module.exports = function (router) {
                 });
             }
 
-            task.assignedUser = assignedUser;
-            task.assignedUserName = assignedUserName;
-            user.pendingTasks.push(task._id.toString());
+            task.name = name;
+            task.description = description;
+            task.deadline = deadline;
+            task.completed = completed;
+
+            if (task.completed == true) {
+                user.pendingTasks.push(task._id.toString());
+            } 
+            // else{
+            //     remove user task from pendingtasks
+            // }
 
             const updatedTask = await task.save();
             const updatedUser = await user.save();
