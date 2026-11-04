@@ -124,9 +124,9 @@ module.exports = function (router) {
             if (task.completed == false) {
                 user.pendingTasks.push(task._id.toString());
             } 
-            // else{
-            //     remove user task from pendingtasks
-            // }
+            else{
+                users.pendingTasks = user.pendingTasks.filter(taskId => taskId !== task._id.toString());
+            }
 
             const updatedTask = await task.save();
             const updatedUser = await user.save();
