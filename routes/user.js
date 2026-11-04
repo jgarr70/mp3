@@ -107,9 +107,36 @@ module.exports = function (router) {
         }
     });
 
-    // router.put('/users/:id', async function (req, res) {
+    router.put('/users/:id', async function (req, res) {
+        try{
+            let query = User.findById(req.params.id);
+            const user = await query;
 
-    // });
+            if (!user){
+                return res.status(404).json({
+                    message: "User not found"
+                });
+            }
+
+            const {name, email, pendingTasks} = req.body;
+            
+            if(name) user.name = name;
+            if(email) user.email = email;
+            if(pendingTasks) user.pendingTasks = pendingTasks;
+
+            updatedUser = await user.save();
+
+            res.status(200).json({
+                message: "User updated successfully",
+                data: updatedUser
+            });
+        } catch (error) {
+            console.error("Error updating user:", error);
+            res.status(500).json({
+                message: "Internal Server Error"
+            });
+        }
+    });
 
     
 
