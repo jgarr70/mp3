@@ -214,6 +214,44 @@ module.exports = function (router) {
         }
     });
 
+    router.delete('/users/:id', async function (req, res) {
+        try {
+            const user = await User.findById(req.params.id);
+
+            if (!user) {
+                return res.status(404).json({
+                    message: "User not found"
+                });
+            }
+
+            const userId = user._id.toString();
+            const pendingTasks = user.pendingTasks.map(id => id.toString());
+
+            const tasks = await Task.find({
+                _id: { $in: pendingTasks }
+            });
+
+            for (const task of tasks) {
+                if (task.assignedUser === userId) {
+                    task.assignedUser = "";
+                    task.assignedUserName = "unassigned";
+                    await task.save();
+                }
+            }
+
+            await User.deleteOne({ _id: req.params.id });
+
+            res.status(200).json({
+                message: "User deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            res.status(500).json({
+                message: "Internal Server Error"
+            });
+        }
+    });
+
     
 
     return router;
