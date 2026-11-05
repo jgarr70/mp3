@@ -118,20 +118,88 @@ module.exports = function (router) {
                 });
             }
 
-            const {name, email, pendingTasks} = req.body;
+            const { name, email, pendingTasks } = req.body;
 
-            if (name != user.name){
-                user.name = name;
-                let
+            let prevName = user.name;
+            let prevEmail = user.email;
+            let prevPendingTasks = user.pendingTasks;
+
+            if (!name || !email) {
+                return res.status(400).json({
+                    message: "Name and email are required"
+                });
             }
-            
-            if(name) user.name = name;
-            if(email) user.email = email;
-            if(pendingTasks) user.pendingTasks = pendingTasks;
 
-            
+            user.name = name !== undefined ? name : prevName;
+            user.email = email !== undefined ? email : prevEmail;
+            user.pendingTasks = pendingTasks !== undefined ? pendingTasks : [];
 
-            updatedUser = await user.save();
+            const oldTasks = user.pendingTasks.map(id => id.toString());
+            const newTasks = pendingTasks !== undefined ? [...new Set(pendingTasks.map(id => id.toString()))] : [];
+            const userId = user._id.toString();
+            const taskIdsToCheck = [...new Set([...oldTasks, ...newTasks])];
+
+            const tasks = await Task.find({
+                _id: { $in: taskIdsToCheck }
+            });
+
+            const taskMap = new Map(tasks.map(task => [task._id.toString(), task]));
+            for (const taskId of newTasks) {
+                if (!taskMap.has(taskId)) {
+                    return res.status(400).json({
+                        message: `Task ${taskId} not found`
+                    });
+                }
+            }
+
+            for (const taskId of oldTasks) {
+                if (!newTasks.includes(taskId)) {
+                    const task = taskMap.get(taskId);
+
+                    if (task && task.assignedUser === userId) {
+                        task.assignedUser = "";
+                        task.assignedUserName = "unassigned";
+                        await task.save();
+                    }
+                }
+            }
+
+            for (const taskId of newTasks) {
+                const task = taskMap.get(taskId);
+
+                if (!task) continue;
+
+                if (
+                    task.assignedUser &&
+                    task.assignedUser !== userId
+                ) {
+                    await User.updateOne(
+                        { _id: task.assignedUser },
+                        { $pull: { pendingTasks: taskId } }
+                    );
+                }
+
+                // Assign task to this user.
+                task.assignedUser = userId;
+                task.assignedUserName = name;
+
+                await task.save();
+            }
+
+            await Task.updateMany(
+                { assignedUser: userId },
+                { $set: { assignedUserName: name } }
+            );
+
+            user.name = name;
+            user.email = email;
+            
+            user.pendingTasks = newTasks.filter(taskId => {
+                const task = taskMap.get(taskId);
+                return task && !task.completed;
+            });
+
+            const updatedUser = await user.save();
 
             res.status(200).json({
                 message: "User updated successfully",
