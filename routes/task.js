@@ -7,7 +7,19 @@ module.exports = function (router) {
 
     router.get('/tasks', async function (req, res) {
         try {
-            const tasks = await Task.find();
+            let whereParams = {};
+
+            if(req.query.where){
+                whereParams = JSON.parse(req.query.where);
+                console.log("Where params:", whereParams);
+            }
+
+            if(req.query.sort){
+                const sortParams = JSON.parse(req.query.sort);
+                console.log("Sort params:", sortParams);
+            }
+
+            const tasks = await Task.find(whereParams).sort(sortParams || {});
 
             res.json({
                 message: "OK",
@@ -15,6 +27,7 @@ module.exports = function (router) {
             });
 
         } catch (error) {
+            console.error("Error fetching tasks:", error);
             res.status(500).json({
                 message: "Internal Server Error"
             });
