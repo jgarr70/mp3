@@ -225,7 +225,7 @@ module.exports = function (router) {
 
             await Task.deleteOne({ _id: req.params.id });
 
-            res.status(200).json({
+            res.status(204).json({
                 message: "Task deleted successfully"
             });
 
