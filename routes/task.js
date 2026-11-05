@@ -35,14 +35,16 @@ module.exports = function (router) {
 
             const tasks = await Task.find(whereParams).sort(sortParams).skip(skipParams).limit(limitParams);
 
-            const totalTasks = await Task.countDocuments(whereParams);
-            console.log("Total tasks matching where params:", totalTasks);
-
-            res.json({
+            const response = {
                 message: "OK",
-                data: tasks,
-                count: totalTasks
-            });
+                data: tasks
+            };
+            
+            if (req.query.count === "true") {
+                const totalTasks = await Task.countDocuments(whereParams).skip(skipParams || 0).limit(limitParams || 0);                response.count = totalTasks;
+            }
+
+            res.json(response);
 
         } catch (error) {
             console.error("Error fetching tasks:", error);
