@@ -41,7 +41,8 @@ module.exports = function (router) {
             };
             
             if (req.query.count === "true") {
-                const totalTasks = await Task.countDocuments(whereParams).skip(skipParams || 0).limit(limitParams || 0);                response.count = totalTasks;
+                const totalTasks = await Task.countDocuments(whereParams);                
+                response.count = totalTasks;
             }
 
             res.json(response);
