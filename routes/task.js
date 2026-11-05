@@ -40,7 +40,8 @@ module.exports = function (router) {
 
             res.json({
                 message: "OK",
-                data: tasks
+                data: tasks,
+                count: totalTasks
             });
 
         } catch (error) {

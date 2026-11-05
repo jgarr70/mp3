@@ -241,7 +241,7 @@ module.exports = function (router) {
 
             await User.deleteOne({ _id: req.params.id });
 
-            res.status(200).json({
+            res.status(204).json({
                 message: "User deleted successfully"
             });
         } catch (error) {
