@@ -8,6 +8,10 @@ module.exports = function (router) {
     router.get('/tasks', async function (req, res) {
         try {
             let whereParams = {};
+            let sortParams = {};
+            let limitParams = null;
+            let skipParams = null;
+
 
             if(req.query.where){
                 whereParams = JSON.parse(req.query.where);
@@ -15,11 +19,24 @@ module.exports = function (router) {
             }
 
             if(req.query.sort){
-                const sortParams = JSON.parse(req.query.sort);
+                sortParams = JSON.parse(req.query.sort);
                 console.log("Sort params:", sortParams);
             }
 
-            const tasks = await Task.find(whereParams).sort(sortParams || {});
+            if(req.query.limit){
+                limitParams = parseInt(req.query.limit);
+                console.log("Limit params:", limitParams);
+            }
+
+            if(req.query.skip){
+                skipParams = parseInt(req.query.skip);
+                console.log("Skip params:", skipParams);
+            }
+
+            const tasks = await Task.find(whereParams).sort(sortParams).skip(skipParams).limit(limitParams);
+
+            const totalTasks = await Task.countDocuments(whereParams);
+            console.log("Total tasks matching where params:", totalTasks);
 
             res.json({
                 message: "OK",
