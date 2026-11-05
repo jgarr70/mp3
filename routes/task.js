@@ -16,21 +16,45 @@ module.exports = function (router) {
             if(req.query.where){
                 whereParams = JSON.parse(req.query.where);
                 console.log("Where params:", whereParams);
+                if(typeof whereParams !== 'object' || Array.isArray(whereParams)) {
+                    return res.status(400).json({
+                        message: "Where must be a valid JSON object",
+                        data: null
+                    });
+                }
             }
 
             if(req.query.sort){
                 sortParams = JSON.parse(req.query.sort);
                 console.log("Sort params:", sortParams);
+                if(typeof sortParams !== 'object' || Array.isArray(sortParams)) {
+                    return res.status(400).json({
+                        message: "Sort must be a valid JSON object",
+                        data: null
+                    });
+                }
             }
 
             if(req.query.limit){
                 limitParams = parseInt(req.query.limit);
                 console.log("Limit params:", limitParams);
+                if(Number(limitParams) == NaN || limitParams < 0){
+                    return res.status(400).json({
+                        message: "Limit must be a positive integer",
+                        data: null
+                    });
+                }
             }
 
             if(req.query.skip){
                 skipParams = parseInt(req.query.skip);
                 console.log("Skip params:", skipParams);
+                if(Number(skipParams) == NaN || skipParams < 0){
+                    return res.status(400).json({
+                        message: "Skip must be a positive integer",
+                        data: null
+                    });
+                }
             }
 
             const tasks = await Task.find(whereParams).sort(sortParams).skip(skipParams).limit(limitParams);
@@ -48,11 +72,12 @@ module.exports = function (router) {
                 message: "OK",
                 data: tasks
             });
-            
+
         } catch (error) {
             console.error("Error fetching tasks:", error);
             res.status(500).json({
-                message: "Internal Server Error"
+                message: "Internal Server Error",
+                data: null
             });
         }
     });
@@ -74,7 +99,8 @@ module.exports = function (router) {
             
             if (!task) {
                 return res.status(404).json({
-                    message: "Task not found"
+                    message: "Task not found",
+                    data: null
                 });
             }
 
@@ -85,7 +111,8 @@ module.exports = function (router) {
 
         } catch (error) {
             res.status(500).json({
-                message: "Internal Server Error"
+                message: "Internal Server Error",
+                data: null
             });
         }
     });
@@ -93,15 +120,16 @@ module.exports = function (router) {
     router.post('/tasks', async function (req, res) {
         console.log("POST /tasks route reached!");
         try {
-            const { name, deadline, description, completed, assignedUser, assignedUserName, dataCreated} = req.body;
+            const { name, deadline, description, completed, assignedUser, assignedUserName, dateCreated} = req.body;
 
             if (!name || !deadline) {
                 return res.status(400).json({
-                    message: "Name and deadline are required"
+                    message: "Name and deadline are required",
+                    data: null
                 });
             }
 
-            const newTask = new Task({ name, deadline, description, completed, assignedUser, assignedUserName, dataCreated });
+            const newTask = new Task({ name, deadline, description, completed, assignedUser, assignedUserName, dateCreated });
             await newTask.save();
 
             res.status(201).json({
@@ -114,7 +142,8 @@ module.exports = function (router) {
 
         } catch (error) {
             res.status(500).json({
-                message: "Internal Server Error"
+                message: "Internal Server Error",
+                data: null
             });
         }
     });
@@ -128,7 +157,8 @@ module.exports = function (router) {
 
             if (!task){
                 return res.status(404).json({
-                    message: "Task not found"
+                    message: "Task not found",
+                    data: null
                 });
             }
             
@@ -136,7 +166,9 @@ module.exports = function (router) {
 
             if(!name || !deadline){
                 return res.status(400).json({
-                    message: "Name and deadline are required"
+                    message: "Name and deadline are required",
+                    data: null
+
                 });
             }
 
@@ -151,12 +183,14 @@ module.exports = function (router) {
                 newUser = await User.findById(newAssignedUser);
                 if(!newUser){
                     return res.status(400).json({
-                        message: "Assigned user not found"
+                        message: "Assigned user not found",
+                        data: null
                     });
                 }
                 if(assignedUserName !== undefined && newUser.name !== assignedUserName){
                     return res.status(400).json({
-                        message: "Assigned user's name does not match"
+                        message: "Assigned user's name does not match",
+                        data: null
                     });
                 }
                 newAssignedUserName = newUser.name;
@@ -205,7 +239,8 @@ module.exports = function (router) {
         } catch (error) {
             console.error("Error fetching users:", error);
             res.status(500).json({
-                message: "Internal Server Error"
+                message: "Internal Server Error",
+                data: null
             });
         }
 
@@ -218,7 +253,8 @@ module.exports = function (router) {
 
             if (!task) {
                 return res.status(404).json({
-                    message: "Task not found"
+                    message: "Task not found",
+                    data: null
                 });
             }
 
@@ -231,14 +267,13 @@ module.exports = function (router) {
 
             await Task.deleteOne({ _id: req.params.id });
 
-            res.status(204).json({
-                message: "Task deleted successfully"
-            });
+            return res.status(204).end();
 
         } catch (error) {
             console.error("Error deleting task:", error);
             res.status(500).json({
-                message: "Internal Server Error"
+                message: "Internal Server Error",
+                data: null
             });
         }
     });
