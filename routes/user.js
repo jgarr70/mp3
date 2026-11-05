@@ -119,10 +119,17 @@ module.exports = function (router) {
             }
 
             const {name, email, pendingTasks} = req.body;
+
+            if (name != user.name){
+                user.name = name;
+                let
+            }
             
             if(name) user.name = name;
             if(email) user.email = email;
             if(pendingTasks) user.pendingTasks = pendingTasks;
+
+            
 
             updatedUser = await user.save();
 

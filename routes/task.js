@@ -95,47 +95,75 @@ module.exports = function (router) {
                     message: "Task not found"
                 });
             }
-            // console.log("Req: ", req.body);name: {
-            const { assignedUser, assignedUserName, name, description, deadline, completed} = req.body;
+            
+            let{name, deadline, description, completed, assignedUser, assignedUserName} = req.body;
 
-            let user_query = User.findById(assignedUser);
-            const user = await user_query;
-
-            task.assignedUser = assignedUser;
-            task.assignedUserName = assignedUserName;
-
-            if (!user){
-                return res.status(404).json({
-                    message: "User not found"
-                });
-            }
-
-            if(user.name !== assignedUserName){
+            if(!name || !deadline){
                 return res.status(400).json({
-                    message: "Assigned user name does not match the user ID"
+                    message: "Name and deadline are required"
                 });
             }
 
-            task.name = name;
-            task.description = description;
-            task.deadline = deadline;
-            task.completed = completed;
+            const newAssignedUser = assignedUser !== undefined ? assignedUser : "";
+            let newAssignedUserName = assignedUserName !== undefined ? assignedUserName : "unassigned";
 
-            if (task.completed == false) {
-                user.pendingTasks.push(task._id.toString());
-            } 
-            else{
-                users.pendingTasks = user.pendingTasks.filter(taskId => taskId !== task._id.toString());
+            let newUser = null;
+
+            if(newAssignedUser == ""){
+                newAssignedUserName = "unassigned";
+            } else{
+                newUser = await User.findById(newAssignedUser);
+                if(!newUser){
+                    return res.status(400).json({
+                        message: "Assigned user not found"
+                    });
+                }
+                if(assignedUserName !== undefined && newUser.name !== assignedUserName){
+                    return res.status(400).json({
+                        message: "Assigned user's name does not match"
+                    });
+                }
+                newAssignedUserName = newUser.name;
             }
 
-            const updatedTask = await task.save();
-            const updatedUser = await user.save();
+            const prevAssignedUser = task.assignedUser;
+            const newCompleted = completed !== undefined ? completed : false;
+            
+            const taskId = task._id.toString();
+
+            if (prevAssignedUser && prevAssignedUser !== newAssignedUser) {
+                await User.updateOne(
+                    { _id: prevAssignedUser },
+                    { $pull: { pendingTasks: taskId } }
+                );
+            }
+            task.name = name;
+            task.deadline = deadline;
+            task.description = description !== undefined ? description : "";
+            task.completed = newCompleted;
+            task.assignedUser = newAssignedUser;
+            task.assignedUserName = newAssignedUserName;
+
+            await task.save();
+
+            if(newAssignedUser){
+                if(newCompleted){
+                    await User.updateOne(
+                        { _id: newAssignedUser },
+                        { $pull: { pendingTasks: taskId } }
+                    );
+                } else {
+                    await User.updateOne(
+                        { _id: newAssignedUser },
+                        { $addToSet: { pendingTasks: taskId } }
+                    );
+                }
+            }
 
             res.status(200).json({
                 message: "Task updated successfully",
-                data: updatedTask
+                data: task
             });
-
 
 
         } catch (error) {
