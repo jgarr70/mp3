@@ -205,5 +205,37 @@ module.exports = function (router) {
 
     });
 
+    router.delete('/tasks/:id', async function (req, res) {
+        console.log("DELETE /tasks/:id route reached!");
+        try {
+            const task = await Task.findById(req.params.id);
+
+            if (!task) {
+                return res.status(404).json({
+                    message: "Task not found"
+                });
+            }
+
+            if (task.assignedUser) {
+                await User.updateOne(
+                    { _id: task.assignedUser },
+                    { $pull: { pendingTasks: task._id.toString() } }
+                );
+            }
+
+            await Task.deleteOne({ _id: req.params.id });
+
+            res.status(200).json({
+                message: "Task deleted successfully"
+            });
+
+        } catch (error) {
+            console.error("Error deleting task:", error);
+            res.status(500).json({
+                message: "Internal Server Error"
+            });
+        }
+    });
+
     return router;
 };
